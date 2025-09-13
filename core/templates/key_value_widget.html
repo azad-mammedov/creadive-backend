@@ -1,0 +1,52 @@
+<div id="key-value-widget">
+  <div id="{{ widget.attrs.id }}-container">
+    {% for k, v in widget.value %}
+      <div class="pair">
+        <input type="text" name="{{ widget.name }}_{{ forloop.counter0 }}_key" value="{{ k }}" placeholder="Key">
+        <input type="text" name="{{ widget.name }}_{{ forloop.counter0 }}_value" value="{{ v }}" placeholder="Value">
+        <button type="button" class="remove-btn">❌</button>
+      </div>
+    {% endfor %}
+    <!-- Empty row for new entry -->
+    <div class="pair">
+      <input type="text" name="{{ widget.name }}_{{ widget.value|length }}_key" placeholder="Key">
+      <input type="text" name="{{ widget.name }}_{{ widget.value|length }}_value" placeholder="Value">
+      <button type="button" class="remove-btn">❌</button>
+    </div>
+  </div>
+  <button type="button" id="{{ widget.attrs.id }}-add-btn">+ Add</button>
+</div>
+
+<script>
+(function() {
+  const container = document.getElementById("{{ widget.attrs.id }}-container");
+  const addBtn = document.getElementById("{{ widget.attrs.id }}-add-btn");
+
+  addBtn.addEventListener("click", () => {
+    const index = container.children.length;
+    const row = document.createElement("div");
+    row.classList.add("pair");
+    row.innerHTML = `
+      <input type="text" name="{{ widget.name }}_${index}_key" placeholder="Key">
+      <input type="text" name="{{ widget.name }}_${index}_value" placeholder="Value">
+      <button type="button" class="remove-btn">❌</button>
+    `;
+    container.appendChild(row);
+    attachRemove(row);
+  });
+
+  function attachRemove(row) {
+    const btn = row.querySelector(".remove-btn");
+    btn.addEventListener("click", () => row.remove());
+  }
+
+  // Attach remove buttons to existing rows
+  container.querySelectorAll(".pair").forEach(attachRemove);
+})();
+</script>
+
+<style>
+  #key-value-widget .pair { margin-bottom: 4px; }
+  #key-value-widget input { margin-right: 5px; min-width: 180px; }
+  #key-value-widget .remove-btn { margin-left: 5px; }
+</style>

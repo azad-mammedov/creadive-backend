@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+import uuid, os
 
 
 class TimeStampedModel(models.Model):
@@ -76,6 +77,13 @@ class SocialLink(models.Model):
         return f"{self.team_member.name} - {self.get_platform_display()}"
 
 
+
+
+def blog_image_upload_to(instance, filename):
+        ext = os.path.splitext(filename)[1]
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        return f"blog_images/{unique_name}"
+
 class BlogPost(TimeStampedModel):
     """Blog post model with proper relationships"""
     STATUS_CHOICES = [("published", "Published"), ("draft", "Draft")]
@@ -86,7 +94,9 @@ class BlogPost(TimeStampedModel):
     category = models.CharField(max_length=100, blank=True)
     date = models.DateField()
     readTime = models.CharField(max_length=50, blank=True)
-    image = models.URLField(max_length=500, blank=True)
+    
+
+    image = models.ImageField(upload_to=blog_image_upload_to, blank=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         null=True, 
@@ -109,11 +119,18 @@ class BlogPost(TimeStampedModel):
         return list(self.tags.values_list('name', flat=True))
 
 
+def portfolio_image_upload_to(instance, filename):
+        ext = os.path.splitext(filename)[1]
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        return f"portfolio_images/{unique_name}"
+
 class PortfolioItem(TimeStampedModel):
     """Portfolio item model with proper relationships"""
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    image = models.URLField(max_length=500, blank=True)
+
+
+    image = models.ImageField(upload_to=portfolio_image_upload_to, blank=True)
     url = models.URLField(max_length=500, blank=True)
     category = models.CharField(max_length=100, blank=True)
     technologies = models.ManyToManyField(Technology, blank=True, related_name="portfolio_items")
@@ -132,13 +149,18 @@ class PortfolioItem(TimeStampedModel):
         return list(self.technologies.values_list('name', flat=True))
 
 
+def service_image_upload_to(instance, filename):
+        ext = os.path.splitext(filename)[1]
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        return f"service_images/{unique_name}"
+
 class Service(TimeStampedModel):
     """Service model with related features"""
     id = models.CharField(primary_key=True, max_length=100)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     details = models.TextField(blank=True)
-    image = models.URLField(max_length=500, blank=True)
+    image = models.ImageField(upload_to=service_image_upload_to, blank=True)
     pricing = models.CharField(max_length=255, blank=True)
 
     class Meta:
@@ -152,12 +174,17 @@ class Service(TimeStampedModel):
         """Return list of feature names for backward compatibility"""
         return list(self.service_features.values_list('name', flat=True))
 
+def team_member_image_upload_to(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    return f"team_member_images/{unique_name}"
+
 
 class TeamMember(TimeStampedModel):
     """Team member model with related social links"""
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, blank=True)
-    image = models.URLField(max_length=500, blank=True)
+    image = models.ImageField(upload_to=team_member_image_upload_to, blank=True)
     bio = models.TextField(blank=True)
     order = models.IntegerField(default=0)
 

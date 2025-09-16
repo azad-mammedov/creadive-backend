@@ -109,10 +109,17 @@ class TestimonialViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["order", "id"]
 
 
-class ContactInquiryViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for ContactInquiry model"""
+class ContactInquiryViewSet(viewsets.ModelViewSet):
+    """ViewSet for ContactInquiry model with create endpoint"""
     queryset = ContactInquiry.objects.all()
     serializer_class = ContactInquirySerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["fullName", "email", "phone", "company", "subject", "status"]
     ordering_fields = ["createdAt", "id"]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

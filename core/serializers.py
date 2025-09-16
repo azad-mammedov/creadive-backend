@@ -151,5 +151,5 @@ class ContactInquirySerializer(serializers.ModelSerializer):
         model = ContactInquiry
         fields = (
             "id", "fullName", "email", "phone", "company", "subject",
-            "status", "createdAt",
+            "status", 
         )

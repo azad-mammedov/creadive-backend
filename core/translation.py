@@ -1,9 +1,11 @@
 from modeltranslation.translator import translator, TranslationOptions
-from .models import BlogPost, PortfolioItem, Service, TeamMember, Testimonial
+from .models import BlogPost, PortfolioItem, Service, TeamMember, Testimonial , Category
 
 class BlogPostTO(TranslationOptions):
-    fields = ("title", "excerpt", "content", "category", "readTime")
+    fields = ("title", "excerpt", "content", "readTime")
 
+class CategoryTO(TranslationOptions):
+    fields = ("name",)
 class PortfolioItemTO(TranslationOptions):
     fields = ("title", "description", "category", "client")
 
@@ -21,3 +23,4 @@ translator.register(PortfolioItem, PortfolioItemTO)
 translator.register(Service, ServiceTO)
 translator.register(TeamMember, TeamMemberTO)
 translator.register(Testimonial, TestimonialTO)
+translator.register(Category, CategoryTO) 

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import (
     BlogPost, PortfolioItem, Service, TeamMember, Testimonial, ContactInquiry,
-    Tag, Technology, ServiceFeature, SocialLink
+    Tag, Technology, ServiceFeature, SocialLink , Category  
 )
 
 User = get_user_model()
@@ -47,12 +47,22 @@ class AuthorSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "first_name", "last_name", "email")
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    """Serializer for Category model"""
+    class Meta:
+        model = Category
+        fields = ("id", "name", "order")
+
 class BlogPostSerializer(serializers.ModelSerializer):
     """Serializer for BlogPost model with nested relationships"""
     author = AuthorSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     tags_list = serializers.SerializerMethodField(
         help_text="List of tag names for backward compatibility"
+    )
+    categories = CategorySerializer(many=True, read_only=True)
+    categories_list = serializers.SerializerMethodField(
+        help_text="List of category names for backward compatibility"
     )
 
     def get_tags_list(self, obj):
@@ -61,12 +71,18 @@ class BlogPostSerializer(serializers.ModelSerializer):
             return obj.tags_list
         except AttributeError:
             return []
+    def get_categories_list(self, obj):
+        """Get list of category names for backward compatibility"""
+        try:
+            return obj.categories_list
+        except AttributeError:
+            return []
 
     class Meta:
         model = BlogPost
         fields = (
-            "id", "title", "excerpt", "content", "category", "date", "readTime",
-            "image", "author", "tags", "tags_list", "status", "createdAt", "updatedAt",
+            "id", "title", "excerpt", "content", "date", "readTime",
+            "image", "author", "tags", "tags_list", 'categories','categories_list',  "status", "createdAt", "updatedAt",
         )
 
 

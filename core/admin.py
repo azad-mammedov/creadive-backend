@@ -14,6 +14,7 @@ from .models import (
     Technology,
     ServiceFeature,
     SocialLink,
+    Category
 )
 
 
@@ -81,6 +82,12 @@ class TagAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     ordering = ('name',)
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    """Admin for Category model"""
+    list_display = ('name', 'order')
+    search_fields = ('name',)
+    ordering = ('order', 'name')
 
 @admin.register(Technology)
 class TechnologyAdmin(admin.ModelAdmin):
@@ -91,25 +98,33 @@ class TechnologyAdmin(admin.ModelAdmin):
     ordering = ('name',)
 
 
-# --- Admin Registrations for Main Models ---
+class BlogPostCategoryInline(admin.TabularInline):
+    """Inline for managing categories inside BlogPost admin"""
+    model = BlogPost.categories.through
+    extra = 1
 
 @admin.register(BlogPost)
 class BlogPostAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
     """Admin for BlogPost model"""
-    list_display = ("id", "title", "category", "status", "date", "author", "tags_display")
-    list_filter = ("status", "category", "date", "author", "tags")
-    search_fields = ("title", "excerpt", "content", "category")
+    list_display = ("id", "title", "status", "date", "author", "tags_display","categories_display")
+    list_filter = ("status",  "date", "author", "tags")
+    search_fields = ("title", "excerpt", "content")
     autocomplete_fields = ("author",)
-    filter_horizontal = ("tags",)
+    filter_horizontal = ("tags","categories")
     date_hierarchy = "date"
+    inlines = [BlogPostCategoryInline]
     
     def get_queryset(self, request):
         """Optimize queryset to prevent N+1 queries"""
-        return super().get_queryset(request).select_related('author').prefetch_related('tags')
+        return super().get_queryset(request).select_related('author').prefetch_related('tags','categories')
 
     def tags_display(self, obj):
         return self.render_related_list(obj, obj.tags)
     tags_display.short_description = "Tags"
+
+    def categories_display(self, obj):
+        return self.render_related_list(obj, obj.categories)
+    categories_display.short_description = "Categories"
 
 
 @admin.register(PortfolioItem)

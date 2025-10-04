@@ -38,8 +38,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",  
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.locale.LocaleMiddleware",  
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -156,7 +156,9 @@ REST_FRAMEWORK = {
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ALLOWED_ORIGINS", os.getenv("FRONTEND_URL", "http://localhost:3000")).split(",") if o.strip()]
 CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOW_HEADERS = [
+    'accept-language', 
+]
 # --- Security (prod) ---
 # SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "http")
 # SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() == "true"
@@ -175,19 +177,19 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("SMTP_USER")
 EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASS")
 
-# --- Logging ---
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "simple": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
-    },
-    "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "simple"},
-    },
-    "root": {"handlers": ["console"], "level": LOG_LEVEL},
-}
+# # --- Logging ---
+# LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "simple": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+#     },
+#     "handlers": {
+#         "console": {"class": "logging.StreamHandler", "formatter": "simple"},
+#     },
+#     "root": {"handlers": ["console"], "level": LOG_LEVEL},
+# }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

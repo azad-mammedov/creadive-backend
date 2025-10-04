@@ -1,12 +1,14 @@
 import logging
 from django.db import transaction
+from django.http import JsonResponse , HttpResponse
+
 from django.db.models import Count, Q
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _ , get_language , activate
 from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework.response import Response 
 from rest_framework.exceptions import NotFound, ValidationError as DRFValidationError
 
 from .models import BlogPost, PortfolioItem, Service, TeamMember, Testimonial, ContactInquiry
@@ -42,14 +44,27 @@ class ErrorHandlingMixin:
             logger.error(f"Error filtering queryset in {self.__class__.__name__}: {str(e)}")
             return queryset.none()
 
+# def debug_language(request):
+#     # activate('ru')
+#     session_lang = request.session.get('django_language')
+#     cookie_lang = request.COOKIES.get('django_language')
+#     accept_lang = request.META.get('HTTP_ACCEPT_LANGUAGE')
+#     active_lang = get_language()
+#     return HttpResponse(
+#         f"Session: {session_lang}, Cookie: {cookie_lang}, Accept-Language: {accept_lang}, Active: {active_lang}"
+#     )
+
 class BlogPostViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for BlogPost model with optimized queries"""
-    queryset = BlogPost.objects.select_related("author").prefetch_related("tags").all()
     serializer_class = BlogPostSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["status", "category", "tags"]
-    search_fields = ["title", "excerpt", "content", "category", "tags__name"]
+    filterset_fields = ["status", "categories", "tags"]
+    search_fields = ["title", "excerpt", "content", "categories__name", "tags__name"]
     ordering_fields = ["date", "createdAt"]
+
+    def get_queryset(self):
+        
+        return BlogPost.objects.select_related("author").prefetch_related("tags",'categories').all()
 
 
 class PortfolioItemViewSet(viewsets.ReadOnlyModelViewSet):

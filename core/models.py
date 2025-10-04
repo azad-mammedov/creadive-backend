@@ -79,6 +79,17 @@ class SocialLink(models.Model):
 
 
 
+class Category(models.Model):
+    """Blog category model"""
+    name = models.CharField(max_length=100, unique=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.name
+
 def blog_image_upload_to(instance, filename):
         ext = os.path.splitext(filename)[1]
         unique_name = f"{uuid.uuid4().hex}{ext}"
@@ -91,7 +102,6 @@ class BlogPost(TimeStampedModel):
     title = models.CharField(max_length=255)
     excerpt = models.TextField(blank=True)
     content = models.TextField()
-    category = models.CharField(max_length=100, blank=True)
     date = models.DateField()
     readTime = models.CharField(max_length=50, blank=True)
     
@@ -105,6 +115,9 @@ class BlogPost(TimeStampedModel):
         related_name="posts"
     )
     tags = models.ManyToManyField(Tag, blank=True, related_name="blog_posts")
+    categories = models.ManyToManyField(
+        Category, blank=True, related_name="blog_posts"
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
 
     class Meta:
@@ -117,6 +130,11 @@ class BlogPost(TimeStampedModel):
     def tags_list(self):
         """Return list of tag names for backward compatibility"""
         return list(self.tags.values_list('name', flat=True))
+    
+    @property
+    def categories_list(self):
+        """Return list of category names for backward compatibility"""
+        return list(self.categories.values_list('name', flat=True))
 
 
 def portfolio_image_upload_to(instance, filename):

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import (
     BlogPost, PortfolioItem, Service, TeamMember, Testimonial, ContactInquiry,
-    Tag, Technology, ServiceFeature, SocialLink , Category  
+    Tag, Technology, ServiceFeature, SocialLink , Category  , HeaderNavLink , FAQ , PortfolioCategory
 )
 
 User = get_user_model()
@@ -86,12 +86,31 @@ class BlogPostSerializer(serializers.ModelSerializer):
         )
 
 
+class PortfolioCategorySerializer(serializers.ModelSerializer):
+    """Serializer for PortfolioCategory model"""
+    class Meta:
+        model = PortfolioCategory
+        fields = ("id", "name", "slug", "order")
+
 class PortfolioItemSerializer(serializers.ModelSerializer):
     """Serializer for PortfolioItem model with nested relationships"""
     technologies = TechnologySerializer(many=True, read_only=True)
+    categories = PortfolioCategorySerializer(many=True, read_only=True)
+
     technologies_list = serializers.SerializerMethodField(
         help_text="List of technology names for backward compatibility"
     )
+    categories_list = serializers.SerializerMethodField(
+        help_text="List of category names for backward compatibility"
+    )
+
+    class Meta:
+        model = PortfolioItem
+        fields = (
+            "id", "title", "description", "image", "url", "categories",
+            "technologies", "technologies_list", "categories_list",
+            "client", "completionDate", "createdAt", "updatedAt",
+        )
 
     def get_technologies_list(self, obj):
         """Get list of technology names for backward compatibility"""
@@ -100,13 +119,12 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
         except AttributeError:
             return []
 
-    class Meta:
-        model = PortfolioItem
-        fields = (
-            "id", "title", "description", "image", "url", "category",
-            "technologies", "technologies_list", "client", "completionDate", 
-            "createdAt", "updatedAt",
-        )
+    def get_categories_list(self, obj):
+        """Get list of category names for backward compatibility"""
+        try:
+            return obj.categories_list
+        except AttributeError:
+            return []
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -167,5 +185,33 @@ class ContactInquirySerializer(serializers.ModelSerializer):
         model = ContactInquiry
         fields = (
             "id", "fullName", "email", "phone", "company", "subject",
-            "status", 
         )
+
+class HeaderNavLinkSerializer(serializers.ModelSerializer):
+    """Recursive serializer for Header Navigation Links"""
+    children = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HeaderNavLink
+        fields = [
+            "id",
+            "title",
+            "url",
+            "is_external",
+            "is_active",
+            "order",
+            "parent",
+            "children",
+        ]
+
+    def get_children(self, obj):
+        """Recursively get active child links"""
+        children_qs = obj.children.filter(is_active=True).order_by("order", "id")
+        return HeaderNavLinkSerializer(children_qs, many=True, context=self.context).data
+
+class FAQSerializer(serializers.ModelSerializer):
+    """Serializer for FAQ model"""
+    
+    class Meta:
+        model = FAQ
+        fields = ["id", "question", "answer", "order", "is_active", "createdAt", "updatedAt"]

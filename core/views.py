@@ -11,10 +11,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response 
 from rest_framework.exceptions import NotFound, ValidationError as DRFValidationError
 
-from .models import BlogPost, PortfolioItem, Service, TeamMember, Testimonial, ContactInquiry
+from .models import BlogPost, PortfolioItem, PortfolioCategory, Service, TeamMember, Testimonial, ContactInquiry , HeaderNavLink , FAQ
 from .serializers import (
     BlogPostSerializer, PortfolioItemSerializer, ServiceSerializer,
-    TeamMemberSerializer, TestimonialSerializer, ContactInquirySerializer
+    TeamMemberSerializer, TestimonialSerializer, ContactInquirySerializer , HeaderNavLinkSerializer , FAQSerializer , PortfolioCategorySerializer
 )
 
 logger = logging.getLogger(__name__)
@@ -69,33 +69,34 @@ class BlogPostViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PortfolioItemViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for PortfolioItem model with optimized queries"""
-    queryset = PortfolioItem.objects.prefetch_related("technologies").all()
+    queryset = PortfolioItem.objects.prefetch_related("technologies", "categories").all()
     serializer_class = PortfolioItemSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["category", "client", "technologies"]
-    search_fields = ["title", "description", "client", "technologies__name"]
+    filterset_fields = ["client", "technologies", "categories"]
+    search_fields = ["title", "description", "client", "technologies__name", "categories__name"]
     ordering_fields = ["completionDate", "createdAt"]
 
     @action(detail=False, methods=["get"], url_path="categories")
     def categories(self, request):
+        """Return all portfolio categories with item counts"""
         data = (
-            PortfolioItem.objects.values("category")
-            .exclude(category="")
-            .annotate(count=Count("id"))
-            .order_by("category")
+            PortfolioCategory.objects.annotate(item_count=Count("portfolio_items"))
+            .filter(item_count__gt=0)
+            .order_by("order", "name")
         )
-        return Response(list(data))
+        serializer = PortfolioCategorySerializer(data, many=True)
+        return Response(serializer.data)
 
-    @action(detail=False, methods=["get"], url_path=r"category/(?P<category>[^/]+)")
-    def by_category(self, request, category: str):
-        qs = self.get_queryset().filter(category=category)
+    @action(detail=False, methods=["get"], url_path=r"category/(?P<slug>[^/]+)")
+    def by_category(self, request, slug: str):
+        """Return portfolio items filtered by category slug"""
+        qs = self.get_queryset().filter(categories__slug=slug)
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-
 
 class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Service model with optimized queries"""
@@ -138,3 +139,25 @@ class ContactInquiryViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class FAQViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for FAQ model"""
+    queryset = FAQ.objects.filter(is_active=True).order_by("order", "id")
+    serializer_class = FAQSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["question", "answer"]
+    ordering_fields = ["order", "id"]
+
+
+class HeaderNavLinkViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for Header Navigation Links (supports nested dropdowns)"""
+    queryset = (
+        HeaderNavLink.objects.filter(is_active=True, parent__isnull=True)
+        .prefetch_related("children")
+        .order_by("order", "id")
+    )
+    serializer_class = HeaderNavLinkSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["title", "url"]
+    ordering_fields = ["order", "id"]

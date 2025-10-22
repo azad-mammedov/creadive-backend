@@ -2,10 +2,12 @@ from django import forms
 from django.contrib import admin
 from django.utils.html import format_html_join, format_html
 from modeltranslation.admin import TranslationAdmin
+from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin  # ✅ added
 
 from .models import (
     BlogPost,
     PortfolioItem,
+    PortfolioCategory,
     Service,
     TeamMember,
     Testimonial,
@@ -14,28 +16,30 @@ from .models import (
     Technology,
     ServiceFeature,
     SocialLink,
-    Category
+    Category,
+    FAQ,
+    HeaderNavLink
 )
 
 
 # --- Inline Admin Classes ---
-class ServiceFeatureInline(admin.TabularInline):
+class ServiceFeatureInline(SortableInlineAdminMixin, admin.TabularInline):  # ✅ sortable inline
     """Inline admin for service features"""
     model = ServiceFeature
     extra = 1
     ordering = ['order', 'id']
-    
+
     def get_queryset(self, request):
         """Optimize inline queryset"""
         return super().get_queryset(request).select_related('service')
 
 
-class SocialLinkInline(admin.TabularInline):
+class SocialLinkInline(SortableInlineAdminMixin, admin.TabularInline):  # ✅ sortable inline
     """Inline admin for social links"""
     model = SocialLink
     extra = 1
     ordering = ['order', 'id']
-    
+
     def get_queryset(self, request):
         """Optimize inline queryset"""
         return super().get_queryset(request).select_related('team_member')
@@ -48,7 +52,7 @@ class TimeStampedAdmin(admin.ModelAdmin):
     ordering = ("-createdAt",)
 
 
-class OrderedAdmin(admin.ModelAdmin):
+class OrderedAdmin(SortableAdminMixin, admin.ModelAdmin):  # ✅ make all ordered models sortable
     """Base admin class for ordered models"""
     readonly_fields = ("createdAt", "updatedAt")
     ordering = ("order", "id")
@@ -63,7 +67,7 @@ class RelationshipDisplayMixin:
             return "-"
         values = [getattr(item, field_name) for item in items]
         return format_html_join(", ", "{}", ((v,) for v in values))
-    
+
     def render_social_links(self, obj):
         """Render social links as formatted list"""
         links = obj.social_links.all()
@@ -73,25 +77,23 @@ class RelationshipDisplayMixin:
         return format_html("<br>".join(items))
 
 
-# --- Admin Registrations for New Models ---
+# --- Admin Registrations ---
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    """Admin for Tag model"""
     list_display = ('name', 'slug')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
     ordering = ('name',)
 
+
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    """Admin for Category model"""
+class CategoryAdmin(OrderedAdmin):  # ✅ sortable
     list_display = ('name', 'order')
     search_fields = ('name',)
-    ordering = ('order', 'name')
+
 
 @admin.register(Technology)
 class TechnologyAdmin(admin.ModelAdmin):
-    """Admin for Technology model"""
     list_display = ('name', 'slug')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
@@ -99,24 +101,22 @@ class TechnologyAdmin(admin.ModelAdmin):
 
 
 class BlogPostCategoryInline(admin.TabularInline):
-    """Inline for managing categories inside BlogPost admin"""
     model = BlogPost.categories.through
     extra = 1
 
+
 @admin.register(BlogPost)
 class BlogPostAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
-    """Admin for BlogPost model"""
-    list_display = ("id", "title", "status", "date", "author", "tags_display","categories_display")
-    list_filter = ("status",  "date", "author", "tags")
+    list_display = ("id", "title", "status", "date", "author", "tags_display", "categories_display")
+    list_filter = ("status", "date", "author", "tags")
     search_fields = ("title", "excerpt", "content")
     autocomplete_fields = ("author",)
-    filter_horizontal = ("tags","categories")
+    filter_horizontal = ("tags", "categories")
     date_hierarchy = "date"
     inlines = [BlogPostCategoryInline]
-    
+
     def get_queryset(self, request):
-        """Optimize queryset to prevent N+1 queries"""
-        return super().get_queryset(request).select_related('author').prefetch_related('tags','categories')
+        return super().get_queryset(request).select_related('author').prefetch_related('tags', 'categories')
 
     def tags_display(self, obj):
         return self.render_related_list(obj, obj.tags)
@@ -127,33 +127,40 @@ class BlogPostAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin
     categories_display.short_description = "Categories"
 
 
+@admin.register(PortfolioCategory)
+class PortfolioCategoryAdmin(OrderedAdmin):  # ✅ sortable
+    list_display = ("id", "name", "slug", "order")
+    search_fields = ("name",)
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(PortfolioItem)
 class PortfolioItemAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
-    """Admin for PortfolioItem model"""
-    list_display = ("id", "title", "category", "client", "completionDate", "technologies_display")
-    list_filter = ("category", "client", "completionDate", "technologies")
+    list_display = ("id", "title", "categories_display", "client", "completionDate", "technologies_display")
+    list_filter = ("categories", "client", "completionDate", "technologies")
     search_fields = ("title", "description", "client")
-    filter_horizontal = ("technologies",)
+    filter_horizontal = ("technologies", "categories")
     date_hierarchy = "completionDate"
-    
+
     def get_queryset(self, request):
-        """Optimize queryset to prevent N+1 queries"""
-        return super().get_queryset(request).prefetch_related('technologies')
+        return super().get_queryset(request).prefetch_related("technologies", "categories")
 
     def technologies_display(self, obj):
         return self.render_related_list(obj, obj.technologies)
     technologies_display.short_description = "Technologies"
 
+    def categories_display(self, obj):
+        return self.render_related_list(obj, obj.categories)
+    categories_display.short_description = "Categories"
+
 
 @admin.register(Service)
-class ServiceAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
-    """Admin for Service model"""
+class ServiceAdmin(SortableAdminMixin,TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
     list_display = ("id", "title", "pricing", "features_display")
     search_fields = ("id", "title", "description", "details")
     inlines = [ServiceFeatureInline]
-    
+
     def get_queryset(self, request):
-        """Optimize queryset to prevent N+1 queries"""
         return super().get_queryset(request).prefetch_related('service_features')
 
     def features_display(self, obj):
@@ -163,14 +170,12 @@ class ServiceAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin)
 
 @admin.register(TeamMember)
 class TeamMemberAdmin(TranslationAdmin, OrderedAdmin, RelationshipDisplayMixin):
-    """Admin for TeamMember model"""
     list_display = ("id", "name", "role", "order", "social_display")
     list_filter = ("role",)
     search_fields = ("name", "role", "bio")
     inlines = [SocialLinkInline]
-    
+
     def get_queryset(self, request):
-        """Optimize queryset to prevent N+1 queries"""
         return super().get_queryset(request).prefetch_related('social_links')
 
     def social_display(self, obj):
@@ -179,7 +184,7 @@ class TeamMemberAdmin(TranslationAdmin, OrderedAdmin, RelationshipDisplayMixin):
 
 
 @admin.register(Testimonial)
-class TestimonialAdmin(TranslationAdmin, OrderedAdmin):
+class TestimonialAdmin(TranslationAdmin, OrderedAdmin):  # ✅ sortable
     list_display = ("id", "name", "role", "order")
     list_filter = ("role",)
     search_fields = ("name", "role", "thoughts")
@@ -193,3 +198,36 @@ class ContactInquiryAdmin(admin.ModelAdmin):
     readonly_fields = ("createdAt",)
     date_hierarchy = "createdAt"
     ordering = ("-createdAt",)
+
+
+@admin.register(FAQ)
+class FAQAdmin(TranslationAdmin, OrderedAdmin):  # ✅ sortable
+    list_display = ("id", "question", "is_active", "order", "createdAt")
+    list_filter = ("is_active",)
+    search_fields = ("question", "answer")
+    list_editable = ("is_active", "order")
+
+
+@admin.register(HeaderNavLink)
+class HeaderNavLinkAdmin(TranslationAdmin, OrderedAdmin):  # ✅ sortable + nested
+    list_display = (
+        "id",
+        "title",
+        "parent_display",
+        "url",
+        "is_external",
+        "is_active",
+        "order",
+        "createdAt",
+    )
+    list_filter = ("is_external", "is_active", "parent")
+    search_fields = ("title", "url")
+    list_editable = ("is_active", "order")
+    autocomplete_fields = ("parent",)
+
+    def parent_display(self, obj):
+        return obj.parent.title if obj.parent else "-"
+    parent_display.short_description = "Parent Link"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("parent")

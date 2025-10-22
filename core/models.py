@@ -79,7 +79,7 @@ class SocialLink(models.Model):
 
 
 
-class Category(models.Model):
+class Category(TimeStampedModel):
     """Blog category model"""
     name = models.CharField(max_length=100, unique=True)
     order = models.PositiveIntegerField(default=0)
@@ -137,6 +137,25 @@ class BlogPost(TimeStampedModel):
         return list(self.categories.values_list('name', flat=True))
 
 
+
+class PortfolioCategory(TimeStampedModel):
+    """Category model for portfolio items"""
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "Portfolio Category"
+        verbose_name_plural = "Portfolio Categories"
+
+    def __str__(self):
+        return self.name
+
+
+
+
+
 def portfolio_image_upload_to(instance, filename):
         ext = os.path.splitext(filename)[1]
         unique_name = f"{uuid.uuid4().hex}{ext}"
@@ -150,8 +169,12 @@ class PortfolioItem(TimeStampedModel):
 
     image = models.ImageField(upload_to=portfolio_image_upload_to, blank=True)
     url = models.URLField(max_length=500, blank=True)
-    category = models.CharField(max_length=100, blank=True)
-    technologies = models.ManyToManyField(Technology, blank=True, related_name="portfolio_items")
+    categories = models.ManyToManyField(
+        PortfolioCategory,
+        blank=True,
+        related_name="portfolio_category_items",
+    )
+    technologies = models.ManyToManyField(Technology, blank=True, related_name="portfolio_technology_items")
     client = models.CharField(max_length=255, blank=True)
     completionDate = models.DateField(null=True, blank=True)
 
@@ -232,7 +255,7 @@ class Testimonial(TimeStampedModel):
         return self.name
 
 
-class ContactInquiry(models.Model):
+class ContactInquiry(TimeStampedModel):
     STATUS_CHOICES = [("new", "New"), ("handled", "Handled")]
     fullName = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
@@ -240,10 +263,48 @@ class ContactInquiry(models.Model):
     company = models.CharField(max_length=255, blank=True)
     subject = models.TextField()
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="new")
-    createdAt = models.DateTimeField(default=timezone.now, editable=False)
 
     class Meta:
         ordering = ["-createdAt", "-id"]
 
     def __str__(self):
         return f"{self.fullName} - {self.subject[:30]}"
+
+class FAQ(TimeStampedModel):
+    question = models.CharField(max_length=500)
+    answer = models.TextField()
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+        verbose_name = "FAQ"
+        verbose_name_plural = "FAQs"
+
+    def __str__(self):
+        return self.question
+    
+
+class HeaderNavLink(TimeStampedModel):
+    """Model to represent header navigation links (supports nested menus)"""
+    title = models.CharField(max_length=100)
+    url = models.CharField(max_length=500, help_text="Internal path or external URL")
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+        help_text="Parent link for dropdown structure"
+    )
+    order = models.PositiveIntegerField(default=0)
+    is_external = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["parent__id", "order", "id"]
+        verbose_name = "Header Navigation Link"
+        verbose_name_plural = "Header Navigation Links"
+
+    def __str__(self):
+        return self.title

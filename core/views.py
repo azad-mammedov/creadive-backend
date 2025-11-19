@@ -80,7 +80,7 @@ class PortfolioItemViewSet(viewsets.ReadOnlyModelViewSet):
     def categories(self, request):
         """Return all portfolio categories with item counts"""
         data = (
-            PortfolioCategory.objects.annotate(item_count=Count("portfolio_items"))
+            PortfolioCategory.objects.annotate(item_count=Count("portfolio_category_items"))
             .filter(item_count__gt=0)
             .order_by("order", "name")
         )

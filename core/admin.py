@@ -106,7 +106,7 @@ class BlogPostCategoryInline(admin.TabularInline):
 
 
 @admin.register(BlogPost)
-class BlogPostAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
+class BlogPostAdmin(TranslationAdmin,OrderedAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
     list_display = ("id", "title", "status", "date", "author", "tags_display", "categories_display")
     list_filter = ("status", "date", "author", "tags")
     search_fields = ("title", "excerpt", "content")
@@ -135,7 +135,7 @@ class PortfolioCategoryAdmin(OrderedAdmin):  # ✅ sortable
 
 
 @admin.register(PortfolioItem)
-class PortfolioItemAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
+class PortfolioItemAdmin(OrderedAdmin,TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
     list_display = ("id", "title", "categories_display", "client", "completionDate", "technologies_display")
     list_filter = ("categories", "client", "completionDate", "technologies")
     search_fields = ("title", "description", "client")
@@ -155,7 +155,7 @@ class PortfolioItemAdmin(TranslationAdmin, TimeStampedAdmin, RelationshipDisplay
 
 
 @admin.register(Service)
-class ServiceAdmin(SortableAdminMixin,TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
+class ServiceAdmin(OrderedAdmin,TranslationAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
     list_display = ("id", "title", "pricing", "features_display")
     search_fields = ("id", "title", "description", "details")
     inlines = [ServiceFeatureInline]
@@ -191,13 +191,10 @@ class TestimonialAdmin(TranslationAdmin, OrderedAdmin):  # ✅ sortable
 
 
 @admin.register(ContactInquiry)
-class ContactInquiryAdmin(admin.ModelAdmin):
+class ContactInquiryAdmin(OrderedAdmin):
     list_display = ("id", "fullName", "email", "phone", "status", "createdAt")
     list_filter = ("status", "createdAt")
     search_fields = ("fullName", "email", "phone", "company", "subject")
-    readonly_fields = ("createdAt",)
-    date_hierarchy = "createdAt"
-    ordering = ("-createdAt",)
 
 
 @admin.register(FAQ)

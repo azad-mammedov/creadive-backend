@@ -60,7 +60,7 @@ class BlogPostViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["status", "categories", "tags"]
     search_fields = ["title", "excerpt", "content", "categories__name", "tags__name"]
-    ordering_fields = ["date", "createdAt"]
+    ordering_fields = ["date", "createdAt","order"]
 
     def get_queryset(self):
         
@@ -74,7 +74,7 @@ class PortfolioItemViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["client", "technologies", "categories"]
     search_fields = ["title", "description", "client", "technologies__name", "categories__name"]
-    ordering_fields = ["completionDate", "createdAt"]
+    ordering_fields = ["completionDate", "createdAt","order"]
 
     @action(detail=False, methods=["get"], url_path="categories")
     def categories(self, request):
@@ -104,7 +104,7 @@ class ServiceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ServiceSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["id", "title", "description", "details", "service_features__name"]
-    ordering_fields = ["id", "createdAt"]
+    ordering_fields = ["id", "createdAt","order"]
 
 
 class TeamMemberViewSet(viewsets.ReadOnlyModelViewSet):
@@ -131,7 +131,7 @@ class ContactInquiryViewSet(viewsets.ModelViewSet):
     serializer_class = ContactInquirySerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["fullName", "email", "phone", "company", "subject", "status"]
-    ordering_fields = ["createdAt", "id"]
+    ordering_fields = ["createdAt", "id","order"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -119,7 +119,7 @@ class BlogPost(TimeStampedModel):
         Category, blank=True, related_name="blog_posts"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
-
+    order = models.IntegerField(default=0)
     class Meta:
         ordering = ["-date", "-id"]
 
@@ -177,6 +177,7 @@ class PortfolioItem(TimeStampedModel):
     technologies = models.ManyToManyField(Technology, blank=True, related_name="portfolio_technology_items")
     client = models.CharField(max_length=255, blank=True)
     completionDate = models.DateField(null=True, blank=True)
+    order = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-completionDate", "id"]
@@ -197,15 +198,16 @@ def service_image_upload_to(instance, filename):
 
 class Service(TimeStampedModel):
     """Service model with related features"""
-    id = models.CharField(primary_key=True, max_length=100)
+    # id = models.CharField(primary_key=True, max_length=100)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     details = models.TextField(blank=True)
     image = models.ImageField(upload_to=service_image_upload_to, blank=True)
     pricing = models.CharField(max_length=255, blank=True)
+    order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["order", "id"]
 
     def __str__(self):
         return self.title
@@ -263,7 +265,7 @@ class ContactInquiry(TimeStampedModel):
     company = models.CharField(max_length=255, blank=True)
     subject = models.TextField()
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="new")
-
+    order = models.IntegerField(default=0)
     class Meta:
         ordering = ["-createdAt", "-id"]
 

@@ -82,7 +82,7 @@ class BlogPostSerializer(serializers.ModelSerializer):
         model = BlogPost
         fields = (
             "id", "title", "excerpt", "content", "date", "readTime",
-            "image", "author", "tags", "tags_list", 'categories','categories_list',  "status", "createdAt", "updatedAt",
+            "image", "author", "tags", "tags_list", 'categories','categories_list',  "status", "createdAt", "updatedAt","order"
         )
 
 
@@ -109,7 +109,7 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
         fields = (
             "id", "title", "description", "image", "url", "categories",
             "technologies", "technologies_list", "categories_list",
-            "client", "completionDate", "createdAt", "updatedAt",
+            "client", "completionDate", "createdAt", "updatedAt","order"
         )
 
     def get_technologies_list(self, obj):
@@ -146,6 +146,7 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = (
             "id", "title", "description", "details", "image",
             "features", "features_list", "pricing", "createdAt", "updatedAt",
+            "order",
         )
 
 
@@ -167,7 +168,7 @@ class TeamMemberSerializer(serializers.ModelSerializer):
         model = TeamMember
         fields = (
             "id", "name", "role", "image", "bio", "social_links", "social", "order",
-            "createdAt", "updatedAt",
+            "createdAt", "updatedAt","order"
         )
 
 
@@ -176,7 +177,7 @@ class TestimonialSerializer(serializers.ModelSerializer):
         model = Testimonial
         fields = (
             "id", "name", "thoughts", "role", "instagramUrl", "order",
-            "createdAt", "updatedAt",
+            "createdAt", "updatedAt","order"
         )
 
 
@@ -184,7 +185,7 @@ class ContactInquirySerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactInquiry
         fields = (
-            "id", "fullName", "email", "phone", "company", "subject",
+            "id", "fullName", "email", "phone", "company", "subject","order"
         )
 
 class HeaderNavLinkSerializer(serializers.ModelSerializer):
@@ -202,6 +203,7 @@ class HeaderNavLinkSerializer(serializers.ModelSerializer):
             "order",
             "parent",
             "children",
+            "order"
         ]
 
     def get_children(self, obj):
@@ -214,4 +216,4 @@ class FAQSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FAQ
-        fields = ["id", "question", "answer", "order", "is_active", "createdAt", "updatedAt"]
+        fields = ["id", "question", "answer", "order", "is_active", "createdAt", "updatedAt","order"]

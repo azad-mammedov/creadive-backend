@@ -41,12 +41,18 @@ services:
       - web
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
+      - /var/www/certbot:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
 
 volumes:
   postgres_data:
   static_volume:
   media_volume:
+  certbot-etc:
+  certbot-var:

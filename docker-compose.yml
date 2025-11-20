@@ -29,8 +29,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - /var/www/creadive.az/staticfiles:/app/staticfiles 
+      - /var/www/creadive.az/media:/app/media
     ports:
       - "127.0.0.1:8000:8000"
 

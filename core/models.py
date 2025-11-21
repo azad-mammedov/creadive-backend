@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 import uuid, os
+from ckeditor.fields import RichTextField
 
 
 class TimeStampedModel(models.Model):
@@ -101,7 +102,7 @@ class BlogPost(TimeStampedModel):
     
     title = models.CharField(max_length=255)
     excerpt = models.TextField(blank=True)
-    content = models.TextField()
+    content = RichTextField()
     date = models.DateField()
     readTime = models.CharField(max_length=50, blank=True)
     

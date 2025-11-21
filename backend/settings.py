@@ -31,10 +31,39 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "adminsortable2",
+    "ckeditor",
+
 
     # Local
     "core",
 ]
+
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 350,
+        'width': '100%',
+    },
+}
+
+BLEACH_ALLOWED_TAGS = [
+    'p', 'b', 'i', 'u', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote',
+    'code', 'pre', 'a', 'img', 'br', 'h1', 'h2', 'h3', 'h4', 'span'
+]
+
+BLEACH_ALLOWED_ATTRIBUTES = {
+    '*': ['style'],
+    'a': ['href', 'title'],
+    'img': ['src', 'alt'],
+}
+
+BLEACH_ALLOWED_STYLES = [
+    'color', 'font-weight', 'text-decoration'
+]
+
+
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

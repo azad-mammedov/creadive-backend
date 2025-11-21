@@ -1,9 +1,10 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html_join, format_html
+from ckeditor.widgets import CKEditorWidget
+from django import forms
 from modeltranslation.admin import TranslationAdmin
-from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin  # ✅ added
-
+from adminsortable2.admin import SortableAdminMixin, SortableInlineAdminMixin 
 from .models import (
     BlogPost,
     PortfolioItem,
@@ -104,9 +105,17 @@ class BlogPostCategoryInline(admin.TabularInline):
     model = BlogPost.categories.through
     extra = 1
 
+class BlogPostAdminForm(forms.ModelForm):
+    class Meta:
+        model = BlogPost
+        fields = "__all__"
+        widgets = {
+            "content": CKEditorWidget(),     # Rich editor in Admin
+        }
 
 @admin.register(BlogPost)
 class BlogPostAdmin(TranslationAdmin,OrderedAdmin, TimeStampedAdmin, RelationshipDisplayMixin):
+    form = BlogPostAdminForm
     list_display = ("id", "title", "status", "date", "author", "tags_display", "categories_display")
     list_filter = ("status", "date", "author", "tags")
     search_fields = ("title", "excerpt", "content")

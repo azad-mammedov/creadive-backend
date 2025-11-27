@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /var/lib/postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -53,6 +53,6 @@ services:
   #     - certbot-var:/var/lib/letsencrypt
 
 volumes:
-  postgres_data:
+  # postgres_data:
   static_volume:
   media_volume:

@@ -4,10 +4,8 @@ services:
   db:
     image: postgres:15
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${DB_NAME:-creadive_db}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    env_file:
+      - .env
     volumes:
       - /var/lib/postgres-data:/var/lib/postgresql/data
     ports:

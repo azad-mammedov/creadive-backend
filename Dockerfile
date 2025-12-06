@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl gettext \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y postgresql-client --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 # Python deps
 COPY requirements.txt .

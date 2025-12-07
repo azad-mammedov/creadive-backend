@@ -1,39 +1,56 @@
 version: "3.9"
 
 services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - /var/lib/postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-creadive_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   web:
     build: .
     restart: unless-stopped
     env_file:
       - .env
+    command: /bin/bash docker/entrypoint.sh
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /var/www/creadive-backend/staticfiles:/app/staticfiles 
+      - /var/www/creadive-backend/media:/app/media
     ports:
       - "127.0.0.1:8000:8000"
-    volumes:
-      - .:/app:delegated
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
-    networks:
-      - app_net
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    healthcheck:
-      # This uses pg_isready to check remote DB connectivity — requires postgresql-client in the image
-      test: ["CMD-SHELL", "pg_isready -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
-
+  # nginx:
+  #   image: nginx:alpine
+  #   restart: unless-stopped
+  #   entrypoint: /nginx-entrypoint.sh
+  #   depends_on:
+  #     - web
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./docker/nginx-entrypoint.sh:/nginx-entrypoint.sh:ro
+  #     - static_volume:/app/staticfiles:ro
+  #     - media_volume:/app/media:ro
+  #     - /var/www/certbot:/var/www/certbot
+  #     - certbot-etc:/etc/letsencrypt
+  #     - certbot-var:/var/lib/letsencrypt
 
 volumes:
+  # postgres_data:
   static_volume:
   media_volume:
-
-networks:
-  app_net:
-    driver: bridge
